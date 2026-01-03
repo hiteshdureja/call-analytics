@@ -64,22 +64,36 @@ export default function EmailPrompt() {
     }
 
     const loadData = async (email: string) => {
-        const { data: supabaseData } = await supabase
-            .from("user_data")
-            .select("chart_data")
-            .eq("email", email)
-            .single()
-        
-        if (supabaseData && supabaseData.chart_data) {
-            setData(supabaseData.chart_data)
-            setPreviousData(supabaseData.chart_data)
-        } else {
-            // No data found, use default
+        try {
+            const { data: supabaseData, error } = await supabase
+                .from("user_data")
+                .select("chart_data")
+                .eq("email", email)
+                .single()
+            
+            if (error && error.code !== 'PGRST116') {
+                // PGRST116 is "not found" which is fine, other errors we log
+                console.error('Error loading data:', error)
+            }
+            
+            if (supabaseData && supabaseData.chart_data) {
+                setData(supabaseData.chart_data)
+                setPreviousData(supabaseData.chart_data)
+            } else {
+                // No data found, use default
+                const defaultData = getDefaultData()
+                setData(defaultData)
+                setPreviousData(null)
+            }
+        } catch (error) {
+            console.error('Error in loadData:', error)
+            // Use default data on error
             const defaultData = getDefaultData()
             setData(defaultData)
             setPreviousData(null)
+        } finally {
+            setLoaded(true)
         }
-        setLoaded(true)
     }
 
     const handleSaveClick = () => {
@@ -96,12 +110,22 @@ export default function EmailPrompt() {
     }
 
     const saveDataToSupabase = async (chartData: HierarchicalChartData) => {
-        await supabase.from("user_data").upsert({ email, chart_data: chartData })
-        setData(chartData)
-        setPreviousData(chartData)
-        setNewValues("")
-        setShowConfirmation(false)
-        setPendingData(null)
+        try {
+            const { error } = await supabase.from("user_data").upsert({ email, chart_data: chartData })
+            if (error) {
+                console.error('Error saving data:', error)
+                alert('Failed to save data. Please check your Supabase configuration.')
+                return
+            }
+            setData(chartData)
+            setPreviousData(chartData)
+            setNewValues("")
+            setShowConfirmation(false)
+            setPendingData(null)
+        } catch (error) {
+            console.error('Error in saveDataToSupabase:', error)
+            alert('Failed to save data. Please check your Supabase configuration.')
+        }
     }
 
     const handleConfirmOverwrite = () => {
