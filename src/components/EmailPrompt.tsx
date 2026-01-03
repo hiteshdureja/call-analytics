@@ -11,7 +11,7 @@ export default function EmailPrompt() {
     const [showConfirmation, setShowConfirmation] = useState(false)
     const [pendingData, setPendingData] = useState<HierarchicalChartData | null>(null)
 
-    // Default data structure
+    // These are the default values that show up if the user hasn't saved anything yet
     const getDefaultData = (): HierarchicalChartData => ({
         innerRing: [
             { name: 'Language Issues', value: 75 },
@@ -29,16 +29,17 @@ export default function EmailPrompt() {
         ],
     })
 
+    // Takes a comma-separated string of numbers and converts it into the chart data structure
     const parseValuesToData = (values: string): HierarchicalChartData => {
         const parsedValues = values.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v))
         
-        // If we have at least 2 values, use them for inner ring and distribute outer ring
+        // Need at least 2 values for the inner ring
         if (parsedValues.length >= 2) {
             const languageValue = parsedValues[0] || 75
             const hostilityValue = parsedValues[1] || 25
             
-            // Distribute outer ring values
-            const outerValues = parsedValues.slice(2, 10) // Take up to 8 more values
+            // The rest of the values go to the outer ring (up to 8 more)
+            const outerValues = parsedValues.slice(2, 10)
             const defaultOuter = [20, 35, 20, 15, 10, 12, 10, 8]
             
             return {
@@ -59,7 +60,7 @@ export default function EmailPrompt() {
             }
         }
         
-        // Fallback to default
+        // If we don't have enough values, just return the default structure
         return getDefaultData()
     }
 
@@ -71,23 +72,24 @@ export default function EmailPrompt() {
                 .eq("email", email)
                 .single()
             
+            // PGRST116 means "not found" which is totally fine - user just doesn't have data yet
             if (error && error.code !== 'PGRST116') {
-                // PGRST116 is "not found" which is fine, other errors we log
                 console.error('Error loading data:', error)
             }
             
             if (supabaseData && supabaseData.chart_data) {
+                // Found data! Use it
                 setData(supabaseData.chart_data)
                 setPreviousData(supabaseData.chart_data)
             } else {
-                // No data found, use default
+                // No data found for this email, show the default values
                 const defaultData = getDefaultData()
                 setData(defaultData)
                 setPreviousData(null)
             }
         } catch (error) {
+            // Something went wrong - just use defaults and keep going
             console.error('Error in loadData:', error)
-            // Use default data on error
             const defaultData = getDefaultData()
             setData(defaultData)
             setPreviousData(null)
@@ -99,12 +101,12 @@ export default function EmailPrompt() {
     const handleSaveClick = () => {
         const newData = parseValuesToData(newValues)
         
-        // If we have previous data, show confirmation
+        // If user already has data saved, show them a confirmation dialog first
         if (previousData) {
             setPendingData(newData)
             setShowConfirmation(true)
         } else {
-            // No previous data, save directly
+            // No existing data, just save it directly
             saveDataToSupabase(newData)
         }
     }
@@ -117,6 +119,7 @@ export default function EmailPrompt() {
                 alert('Failed to save data. Please check your Supabase configuration.')
                 return
             }
+            // Success! Update the UI
             setData(chartData)
             setPreviousData(chartData)
             setNewValues("")

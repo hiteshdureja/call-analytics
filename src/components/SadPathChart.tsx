@@ -15,7 +15,7 @@ interface Props {
     data?: HierarchicalChartData;
 }
 
-// Default data structure matching the requirements
+// Default data to show when no user data is available
 const getDefaultData = (): HierarchicalChartData => ({
     innerRing: [
         { name: 'Language Issues', value: 75 },
@@ -37,13 +37,13 @@ const SadPathChart = ({ data }: Props) => {
     const chartRef = useRef<HTMLDivElement>(null);
     const chartInstanceRef = useRef<echarts.ECharts | null>(null);
 
-    // Initialize chart once
+    // Set up the chart when the component first mounts
     useEffect(() => {
         if (!chartRef.current || chartInstanceRef.current) return;
 
         chartInstanceRef.current = echarts.init(chartRef.current);
 
-        // Handle resize
+        // Make sure the chart resizes when the window does
         const handleResize = () => {
             chartInstanceRef.current?.resize();
         };
@@ -54,14 +54,13 @@ const SadPathChart = ({ data }: Props) => {
         };
     }, []);
 
-    // Update chart when data changes
+    // Update the chart whenever the data changes
     useEffect(() => {
         if (!chartInstanceRef.current) return;
 
         const chartData = data || getDefaultData();
 
-        // Prepare data for multi-ring donut chart
-        // Inner ring data
+        // Format the inner ring data (the main categories)
         const innerData = chartData.innerRing.map((item, index) => ({
             value: item.value,
             name: item.name,
@@ -70,9 +69,9 @@ const SadPathChart = ({ data }: Props) => {
             },
         }));
 
-        // Outer ring data
+        // Format the outer ring data (the detailed breakdowns)
         const outerData = chartData.outerRing.map((item, index) => {
-            // Distribute colors based on category
+            // Cycle through these colors for the outer ring segments
             const colors = ['#60a5fa', '#3b82f6', '#2563eb', '#86efac', '#4ade80', '#a5b4fc', '#818cf8', '#6366f1'];
             return {
                 value: item.value,
@@ -83,6 +82,7 @@ const SadPathChart = ({ data }: Props) => {
             };
         });
 
+        // Configure the chart options
         const option: echarts.EChartsOption = {
             backgroundColor: 'transparent',
             tooltip: {
@@ -176,7 +176,7 @@ const SadPathChart = ({ data }: Props) => {
         chartInstanceRef.current.setOption(option);
     }, [data]);
 
-    // Cleanup on unmount
+    // Clean up the chart when the component unmounts
     useEffect(() => {
         return () => {
             if (chartInstanceRef.current) {

@@ -1,5 +1,6 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
+// Sample data for the call duration chart
 const data = [
     { time: "00:00", duration: 0 },
     { time: "01:00", duration: 30 },
