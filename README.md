@@ -95,7 +95,13 @@ The `chart_data` field stores hierarchical chart data:
 
 ## Deployment
 
-This project is deployed on Vercel. The build output is in the `dist` directory and can be deployed to any static hosting service.
+This project is deployed on Vercel:
+
+**Live URL:** https://call-analytics-beta.vercel.app/
+
+The build output is in the `dist` directory and can be deployed to any static hosting service.
+
+**Note:** To enable full functionality (data persistence), make sure to set the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` environment variables in your Vercel project settings.
 
 ## License
 
