@@ -60,12 +60,15 @@ const SadPathChart = ({ data }: Props) => {
             value: item.value,
             name: item.name,
             itemStyle: {
-                color: index === 0 ? '#60a5fa' : '#86efac',
+                color: index === 0 ? '#6366f1' : '#14b8a6',
             },
         }));
 
         const outerData = chartData.outerRing.map((item, index) => {
-            const colors = ['#60a5fa', '#3b82f6', '#2563eb', '#86efac', '#4ade80', '#a5b4fc', '#818cf8', '#6366f1'];
+            const colors = [
+                '#4338ca', '#4f46e5', '#6366f1', '#818cf8',
+                '#0f766e', '#0d9488', '#14b8a6', '#2dd4bf'
+            ];
             return {
                 value: item.value,
                 name: item.name,
@@ -79,19 +82,21 @@ const SadPathChart = ({ data }: Props) => {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'item',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                borderColor: '#333',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderColor: 'transparent',
+                extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;',
                 textStyle: {
-                    color: '#fff',
+                    color: '#1f2937',
                 },
             },
             legend: {
                 orient: 'vertical',
-                right: 10,
+                right: 0,
                 top: 'center',
                 textStyle: {
-                    color: '#aaa',
+                    color: '#4b5563',
                     fontSize: 12,
+                    fontFamily: 'Inter, sans-serif'
                 },
                 formatter: (name: string) => {
                     const item = [...chartData.innerRing, ...chartData.outerRing].find((d) => d.name === name);
@@ -103,11 +108,11 @@ const SadPathChart = ({ data }: Props) => {
                     name: 'Inner Ring',
                     type: 'pie',
                     radius: ['40%', '60%'],
-                    center: ['40%', '50%'],
+                    center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
                         borderRadius: 4,
-                        borderColor: '#0d1117',
+                        borderColor: '#ffffff',
                         borderWidth: 2,
                     },
                     label: {
@@ -118,7 +123,7 @@ const SadPathChart = ({ data }: Props) => {
                             show: true,
                             fontSize: 14,
                             fontWeight: 'bold',
-                            color: '#fff',
+                            color: '#1f2937',
                         },
                     },
                     labelLine: {
@@ -130,11 +135,11 @@ const SadPathChart = ({ data }: Props) => {
                     name: 'Outer Ring',
                     type: 'pie',
                     radius: ['65%', '85%'],
-                    center: ['40%', '50%'],
+                    center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
                         borderRadius: 4,
-                        borderColor: '#0d1117',
+                        borderColor: '#ffffff',
                         borderWidth: 2,
                     },
                     label: {
@@ -142,14 +147,15 @@ const SadPathChart = ({ data }: Props) => {
                         position: 'outside',
                         formatter: '{b}',
                         fontSize: 11,
-                        color: '#aaa',
+                        color: '#4b5563',
+                        fontFamily: 'Inter, sans-serif'
                     },
                     labelLine: {
                         show: true,
                         length: 15,
                         length2: 10,
                         lineStyle: {
-                            color: '#666',
+                            color: '#9ca3af',
                         },
                     },
                     emphasis: {
@@ -157,7 +163,7 @@ const SadPathChart = ({ data }: Props) => {
                             show: true,
                             fontSize: 12,
                             fontWeight: 'bold',
-                            color: '#fff',
+                            color: '#1f2937',
                         },
                     },
                     data: outerData,
@@ -178,8 +184,8 @@ const SadPathChart = ({ data }: Props) => {
     }, []);
 
     return (
-        <div className="p-4 bg-white/5 rounded-2xl backdrop-blur-md shadow-lg">
-            <h2 className="text-lg font-semibold mb-4 text-white">Sad Path Analysis</h2>
+        <div className="p-6 bg-white/60 backdrop-blur-lg border border-white/30 rounded-2xl shadow-md h-full">
+            <h2 className="text-lg font-bold mb-4 text-gray-900">Sad Path Analysis</h2>
             <div ref={chartRef} style={{ width: '100%', height: '400px' }} />
         </div>
     );

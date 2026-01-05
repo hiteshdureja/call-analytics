@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabaseClient"
 import SadPathChart, { type HierarchicalChartData } from "./SadPathChart"
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl ${className}`}>
+    <div className={`rounded-2xl bg-white/60 backdrop-blur-lg shadow-md border border-white/30 ${className}`}>
         {children}
     </div>
 )
@@ -22,10 +22,10 @@ const Button = ({
     disabled?: boolean;
 }) => {
     const variants = {
-        primary: "bg-accent text-black hover:bg-accent/90",
-        secondary: "bg-white/10 text-white hover:bg-white/20 border border-white/10",
-        danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
-        ghost: "bg-transparent text-gray-400 hover:text-white"
+        primary: "bg-indigo-500 text-white hover:bg-indigo-600 shadow-sm",
+        secondary: "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm",
+        danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200",
+        ghost: "bg-transparent text-gray-500 hover:text-gray-900"
     }
 
     return (
@@ -52,13 +52,13 @@ const Input = ({
     className?: string;
     label?: string;
 }) => (
-    <div className="w-full">
-        {label && <label className="block text-xs text-gray-400 mb-1.5 uppercase tracking-wider font-semibold">{label}</label>}
+    <div className="w-full group">
+        {label && <label className="block text-xs text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 mb-1.5 uppercase tracking-wider font-semibold">{label}</label>}
         <input
             type={type}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all ${className}`}
+            className={`w-full bg-white/50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-200 focus:scale-[1.01] focus:shadow-sm hover:border-gray-300 ${className}`}
         />
     </div>
 )
@@ -133,10 +133,6 @@ export default function EmailPrompt() {
         if (previousData) {
             const msg = `Overwrite Existing Data?
 
-Previous Values:
-Inner: ${previousData.innerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
-Outer: ${previousData.outerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
-
 New Values:
 Inner: ${data.innerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
 Outer: ${data.outerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
@@ -183,8 +179,8 @@ Do you want to overwrite?`
         return (
             <Card className="max-w-md w-full mx-auto mt-10">
                 <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-white mb-2">Welcome Back</h3>
-                    <p className="text-gray-400 text-sm">Enter your email to view your analytics dashboard</p>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h3>
+                    <p className="text-gray-500 text-sm">Enter your email to view your analytics dashboard</p>
                 </div>
                 <div className="space-y-4">
                     <Input
@@ -204,13 +200,13 @@ Do you want to overwrite?`
 
     return (
         <Card className="mt-6">
-            <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
+            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
                 <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                         Call Reasons Analysis
-                        {previousData && <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/20">Synced</span>}
+                        {previousData && <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">Synced</span>}
                     </h2>
-                    <p className="text-sm text-gray-400 mt-1">Breakdown of call failure reasons</p>
+                    <p className="text-sm text-gray-500 mt-1">Breakdown of call failure reasons</p>
                 </div>
 
                 {!isEditing && (
@@ -228,12 +224,12 @@ Do you want to overwrite?`
                 {isEditing && data && (
                     <div className="lg:col-span-1 order-1 lg:order-2 flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="flex-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar mb-4">
-                            <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                                <h3 className="text-accent font-semibold mb-3 text-sm uppercase tracking-wider">Inner Ring (Categories)</h3>
+                            <div className="bg-white/50 rounded-xl p-4 border border-gray-200">
+                                <h3 className="text-indigo-600 font-semibold mb-3 text-sm uppercase tracking-wider">Inner Ring (Categories)</h3>
                                 <div className="space-y-3">
                                     {data.innerRing.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3">
-                                            <span className="text-xs text-gray-400 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                            <span className="text-xs text-gray-500 w-1/2 truncate" title={item.name}>{item.name}</span>
                                             <Input
                                                 value={item.value}
                                                 onChange={(v) => handleDataChange('innerRing', idx, v)}
@@ -245,12 +241,12 @@ Do you want to overwrite?`
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 rounded-xl p-4 border border-white/5">
-                                <h3 className="text-blue-400 font-semibold mb-3 text-sm uppercase tracking-wider">Outer Ring (Details)</h3>
+                            <div className="bg-white/50 rounded-xl p-4 border border-gray-200">
+                                <h3 className="text-blue-600 font-semibold mb-3 text-sm uppercase tracking-wider">Outer Ring (Details)</h3>
                                 <div className="space-y-3">
                                     {data.outerRing.map((item, idx) => (
                                         <div key={idx} className="flex items-center gap-3">
-                                            <span className="text-xs text-gray-400 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                            <span className="text-xs text-gray-500 w-1/2 truncate" title={item.name}>{item.name}</span>
                                             <Input
                                                 value={item.value}
                                                 onChange={(v) => handleDataChange('outerRing', idx, v)}
@@ -263,7 +259,7 @@ Do you want to overwrite?`
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-2 border-t border-white/10">
+                        <div className="flex gap-3 pt-4 border-t border-gray-100">
                             <Button variant="ghost" onClick={handleCancelEdit} className="flex-1">
                                 Cancel
                             </Button>
