@@ -1,10 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/* @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'); */
+
+@theme {
+  --color-primary: #1C1C28;
+  --color-card: #222230;
+  --color-input: #0F0F1A;
+  --color-accent: #855CF1;
+  --color-highlight: #41E5E4;
+  --color-secondary: #9ca3af;
+  --radius-4xl: 32px;
+  --radius-5xl: 48px;
+}
 
 body {
-  @apply min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900;
-  font-family: 'Inter', sans-serif;
+  @apply min-h-screen bg-[#1C1C28] text-white;
+  font-family: 'Outfit', sans-serif;
+  background-image: radial-gradient(circle at 50% 50%, #3e3e68 0%, #1C1C28 90%);
+  background-attachment: fixed;
 }
 
 button {

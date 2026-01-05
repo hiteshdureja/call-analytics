@@ -60,14 +60,14 @@ const SadPathChart = ({ data }: Props) => {
             value: item.value,
             name: item.name,
             itemStyle: {
-                color: index === 0 ? '#6366f1' : '#14b8a6',
+                color: index === 0 ? '#855CF1' : '#41E5E4', // Accent : Highlight
             },
         }));
 
         const outerData = chartData.outerRing.map((item, index) => {
             const colors = [
-                '#4338ca', '#4f46e5', '#6366f1', '#818cf8',
-                '#0f766e', '#0d9488', '#14b8a6', '#2dd4bf'
+                '#6644C4', '#855CF1', '#A78BFA', // Purples
+                '#115E59', '#14B8A6', '#41E5E4'  // Teals
             ];
             return {
                 value: item.value,
@@ -82,21 +82,31 @@ const SadPathChart = ({ data }: Props) => {
             backgroundColor: 'transparent',
             tooltip: {
                 trigger: 'item',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: 'transparent',
-                extraCssText: 'box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;',
+                backgroundColor: '#1C1C28',
+                borderColor: '#2C2C3F',
+                extraCssText: 'box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5); border-radius: 16px;',
                 textStyle: {
-                    color: '#1f2937',
+                    color: '#FFF',
+                    fontFamily: 'Outfit, sans-serif'
                 },
             },
             legend: {
+                type: 'scroll',
                 orient: 'vertical',
                 right: 0,
-                top: 'center',
+                top: 'middle',
+                align: 'left',
+                itemGap: 10,
+                pageIconColor: '#9ca3af',
+                pageIconInactiveColor: '#4b5563',
+                pageTextStyle: {
+                    color: '#9ca3af',
+                    fontFamily: 'Outfit, sans-serif'
+                },
                 textStyle: {
-                    color: '#4b5563',
-                    fontSize: 12,
-                    fontFamily: 'Inter, sans-serif'
+                    color: '#9ca3af',
+                    fontSize: 13,
+                    fontFamily: 'Outfit, sans-serif'
                 },
                 formatter: (name: string) => {
                     const item = [...chartData.innerRing, ...chartData.outerRing].find((d) => d.name === name);
@@ -107,13 +117,13 @@ const SadPathChart = ({ data }: Props) => {
                 {
                     name: 'Inner Ring',
                     type: 'pie',
-                    radius: ['40%', '60%'],
+                    radius: ['45%', '60%'],
                     center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
-                        borderRadius: 4,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderColor: '#222230',
+                        borderWidth: 3,
                     },
                     label: {
                         show: false,
@@ -121,9 +131,9 @@ const SadPathChart = ({ data }: Props) => {
                     emphasis: {
                         label: {
                             show: true,
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: 'bold',
-                            color: '#1f2937',
+                            color: '#FFF',
                         },
                     },
                     labelLine: {
@@ -134,36 +144,36 @@ const SadPathChart = ({ data }: Props) => {
                 {
                     name: 'Outer Ring',
                     type: 'pie',
-                    radius: ['65%', '85%'],
+                    radius: ['65%', '80%'],
                     center: ['35%', '50%'],
                     avoidLabelOverlap: false,
                     itemStyle: {
-                        borderRadius: 4,
-                        borderColor: '#ffffff',
-                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderColor: '#222230',
+                        borderWidth: 3,
                     },
                     label: {
                         show: true,
                         position: 'outside',
                         formatter: '{b}',
-                        fontSize: 11,
-                        color: '#4b5563',
-                        fontFamily: 'Inter, sans-serif'
+                        fontSize: 12,
+                        color: '#9ca3af',
+                        fontFamily: 'Outfit, sans-serif'
                     },
                     labelLine: {
                         show: true,
-                        length: 15,
-                        length2: 10,
+                        length: 20,
+                        length2: 15,
                         lineStyle: {
-                            color: '#9ca3af',
+                            color: '#4b5563',
                         },
                     },
                     emphasis: {
                         label: {
                             show: true,
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: 'bold',
-                            color: '#1f2937',
+                            color: '#FFF',
                         },
                     },
                     data: outerData,
@@ -184,9 +194,9 @@ const SadPathChart = ({ data }: Props) => {
     }, []);
 
     return (
-        <div className="p-6 bg-white/60 backdrop-blur-lg border border-white/30 rounded-2xl shadow-md h-full">
-            <h2 className="text-lg font-bold mb-4 text-gray-900">Sad Path Analysis</h2>
-            <div ref={chartRef} style={{ width: '100%', height: '400px' }} />
+        <div className="p-8 bg-card border border-[#2C2C3F] rounded-5xl shadow-xl h-full w-full">
+            <h2 className="text-2xl font-bold mb-6 text-white">Sad Path Analysis</h2>
+            <div ref={chartRef} className="w-full h-[450px]" />
         </div>
     );
 };

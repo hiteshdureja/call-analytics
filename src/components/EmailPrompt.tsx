@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabaseClient"
 import SadPathChart, { type HierarchicalChartData } from "./SadPathChart"
 
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`rounded-2xl bg-white/60 backdrop-blur-lg shadow-md border border-white/30 ${className}`}>
+    <div className={`rounded-5xl bg-card shadow-xl border border-[#2C2C3F] ${className}`}>
         {children}
     </div>
 )
@@ -22,17 +22,17 @@ const Button = ({
     disabled?: boolean;
 }) => {
     const variants = {
-        primary: "bg-indigo-500 text-white hover:bg-indigo-600 shadow-sm",
-        secondary: "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 shadow-sm",
-        danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200",
-        ghost: "bg-transparent text-gray-500 hover:text-gray-900"
+        primary: "bg-gradient-to-r from-[#855CF1] to-[#6d44d6] text-white hover:brightness-110 shadow-lg shadow-purple-900/30 border-0",
+        secondary: "bg-transparent text-white hover:bg-white/5 border border-white/20",
+        danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
+        ghost: "bg-transparent text-secondary hover:text-white"
     }
 
     return (
         <button
             onClick={onClick}
             disabled={disabled}
-            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+            className={`px-8 py-3 rounded-full font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
         >
             {children}
         </button>
@@ -53,15 +53,68 @@ const Input = ({
     label?: string;
 }) => (
     <div className="w-full group">
-        {label && <label className="block text-xs text-gray-400 group-focus-within:text-indigo-500 transition-colors duration-200 mb-1.5 uppercase tracking-wider font-semibold">{label}</label>}
+        {label && <label className="block text-xs text-secondary group-focus-within:text-highlight transition-colors duration-200 mb-2 uppercase tracking-wider font-bold">{label}</label>}
         <input
             type={type}
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className={`w-full bg-white/50 border border-gray-200 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all duration-200 focus:scale-[1.01] focus:shadow-sm hover:border-gray-300 ${className}`}
+            className={`w-full bg-input border border-white/10 rounded-xl px-5 py-3 text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all duration-200 hover:border-white/20 shadow-inner ${className}`}
         />
     </div>
 )
+
+const ConfirmationModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    newData
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    newData: HierarchicalChartData | null;
+}) => {
+    if (!isOpen || !newData) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card border border-[#2C2C3F] rounded-[40px] p-8 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                <h3 className="text-2xl font-bold text-white mb-2">Overwrite Data?</h3>
+                <p className="text-secondary mb-6">You are about to save new values. This action cannot be undone.</p>
+
+                <div className="space-y-6 mb-8 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                    <div className="bg-primary rounded-3xl p-5 border border-[#2C2C3F]">
+                        <h4 className="text-accent font-bold text-xs uppercase tracking-widest mb-3">New Inner Ring</h4>
+                        <div className="space-y-2">
+                            {newData.innerRing.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-secondary">{item.name}</span>
+                                    <span className="text-white font-mono font-bold">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="bg-primary rounded-3xl p-5 border border-[#2C2C3F]">
+                        <h4 className="text-highlight font-bold text-xs uppercase tracking-widest mb-3">New Outer Ring</h4>
+                        <div className="space-y-2">
+                            {newData.outerRing.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-secondary">{item.name}</span>
+                                    <span className="text-white font-mono font-bold">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <Button variant="secondary" onClick={onClose} className="flex-1">Cancel</Button>
+                    <Button variant="primary" onClick={onConfirm} className="flex-1">Confirm Save</Button>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 export default function EmailPrompt() {
     const [email, setEmail] = useState("")
@@ -69,6 +122,7 @@ export default function EmailPrompt() {
     const [previousData, setPreviousData] = useState<HierarchicalChartData | null>(null)
     const [loaded, setLoaded] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
 
     const getDefaultData = (): HierarchicalChartData => ({
         innerRing: [
@@ -131,19 +185,16 @@ export default function EmailPrompt() {
         if (!data) return
 
         if (previousData) {
-            const msg = `Overwrite Existing Data?
-
-New Values:
-Inner: ${data.innerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
-Outer: ${data.outerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
-
-Do you want to overwrite?`
-
-            if (window.confirm(msg)) {
-                saveDataToSupabase(data)
-            }
+            setShowConfirmModal(true)
         } else {
             saveDataToSupabase(data)
+        }
+    }
+
+    const confirmSave = () => {
+        if (data) {
+            saveDataToSupabase(data)
+            setShowConfirmModal(false)
         }
     }
 
@@ -177,20 +228,20 @@ Do you want to overwrite?`
 
     if (!loaded) {
         return (
-            <Card className="max-w-md w-full mx-auto mt-10">
-                <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h3>
-                    <p className="text-gray-500 text-sm">Enter your email to view your analytics dashboard</p>
+            <Card className="max-w-md w-full mx-auto mt-20 p-8">
+                <div className="text-center mb-8">
+                    <h3 className="text-3xl font-bold text-white mb-3">Welcome Back</h3>
+                    <p className="text-secondary text-base">Enter your email to view your analytics dashboard</p>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                     <Input
                         value={email}
                         onChange={setEmail}
                         label="Email Address"
                         type="email"
-                        className="text-lg"
+                        className="text-lg text-center"
                     />
-                    <Button onClick={() => loadData(email)} className="w-full py-3">
+                    <Button onClick={() => loadData(email)} className="w-full py-4 text-lg">
                         Load Dashboard
                     </Button>
                 </div>
@@ -199,14 +250,14 @@ Do you want to overwrite?`
     }
 
     return (
-        <Card className="mt-6">
-            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
+        <Card className="mt-6 p-8 relative">
+            <div className="flex justify-between items-center mb-10 border-b border-[#2C2C3F] pb-8">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                         Call Reasons Analysis
-                        {previousData && <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">Synced</span>}
+                        {previousData && <span className="text-xs font-bold px-3 py-1 rounded-full bg-highlight/10 text-highlight border border-highlight/20 tracking-wide uppercase">Synced</span>}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">Breakdown of call failure reasons</p>
+                    <p className="text-secondary mt-2">Breakdown of call failure reasons</p>
                 </div>
 
                 {!isEditing && (
@@ -216,20 +267,20 @@ Do you want to overwrite?`
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className={`lg:col-span-2 order-2 lg:order-1 transition-all duration-500 ${isEditing ? 'opacity-50 blur-sm pointer-events-none' : 'opacity-100'}`}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className={`${isEditing ? 'lg:col-span-2' : 'lg:col-span-3'} order-2 lg:order-1 transition-all duration-500 ${isEditing ? 'opacity-30 blur-sm pointer-events-none' : 'opacity-100'}`}>
                     <SadPathChart data={data || undefined} />
                 </div>
 
                 {isEditing && data && (
-                    <div className="lg:col-span-1 order-1 lg:order-2 flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="flex-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar mb-4">
-                            <div className="bg-white/50 rounded-xl p-4 border border-gray-200">
-                                <h3 className="text-indigo-600 font-semibold mb-3 text-sm uppercase tracking-wider">Inner Ring (Categories)</h3>
-                                <div className="space-y-3">
+                    <div className="lg:col-span-1 order-1 lg:order-2 flex flex-col h-full animate-in fade-in slide-in-from-right-8 duration-500">
+                        <div className="flex-1 space-y-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar mb-6">
+                            <div className="bg-[#1C1C28] rounded-3xl p-6 border border-[#2C2C3F]">
+                                <h3 className="text-accent font-bold mb-4 text-xs uppercase tracking-widest">Inner Ring (Categories)</h3>
+                                <div className="space-y-4">
                                     {data.innerRing.map((item, idx) => (
-                                        <div key={idx} className="flex items-center gap-3">
-                                            <span className="text-xs text-gray-500 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                        <div key={idx} className="space-y-2">
+                                            <span className="text-sm text-secondary font-medium pl-2">{item.name}</span>
                                             <Input
                                                 value={item.value}
                                                 onChange={(v) => handleDataChange('innerRing', idx, v)}
@@ -241,12 +292,12 @@ Do you want to overwrite?`
                                 </div>
                             </div>
 
-                            <div className="bg-white/50 rounded-xl p-4 border border-gray-200">
-                                <h3 className="text-blue-600 font-semibold mb-3 text-sm uppercase tracking-wider">Outer Ring (Details)</h3>
-                                <div className="space-y-3">
+                            <div className="bg-[#1C1C28] rounded-3xl p-6 border border-[#2C2C3F]">
+                                <h3 className="text-highlight font-bold mb-4 text-xs uppercase tracking-widest">Outer Ring (Details)</h3>
+                                <div className="space-y-4">
                                     {data.outerRing.map((item, idx) => (
-                                        <div key={idx} className="flex items-center gap-3">
-                                            <span className="text-xs text-gray-500 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                        <div key={idx} className="space-y-2">
+                                            <span className="text-sm text-secondary font-medium pl-2">{item.name}</span>
                                             <Input
                                                 value={item.value}
                                                 onChange={(v) => handleDataChange('outerRing', idx, v)}
@@ -259,7 +310,7 @@ Do you want to overwrite?`
                             </div>
                         </div>
 
-                        <div className="flex gap-3 pt-4 border-t border-gray-100">
+                        <div className="flex gap-4 pt-6 border-t border-[#2C2C3F]">
                             <Button variant="ghost" onClick={handleCancelEdit} className="flex-1">
                                 Cancel
                             </Button>
@@ -270,6 +321,13 @@ Do you want to overwrite?`
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                onConfirm={confirmSave}
+                newData={data}
+            />
         </Card>
     )
 }

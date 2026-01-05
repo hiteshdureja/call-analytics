@@ -11,31 +11,32 @@ const data = [
 
 export default function CallDurationChart() {
     return (
-        <div className="p-6 bg-white/60 backdrop-blur-lg border border-white/30 rounded-2xl shadow-md">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">Call Duration Analysis</h2>
-            <ResponsiveContainer width="100%" height={200}>
+        <div className="p-8 bg-card border border-[#2C2C3F] rounded-5xl shadow-xl">
+            <h2 className="text-2xl font-bold text-white mb-8">Call Duration Analysis</h2>
+            <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={data}>
                     <defs>
                         <linearGradient id="colorDuration" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                            <stop offset="5%" stopColor="#855CF1" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#855CF1" stopOpacity={0} />
                         </linearGradient>
                     </defs>
-                    <XAxis dataKey="time" stroke="#9ca3af" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                    <YAxis stroke="#9ca3af" tick={{ fill: '#6b7280', fontSize: 12 }} />
+                    <XAxis dataKey="time" stroke="#4b5563" tick={{ fill: '#9ca3af', fontSize: 13, fontFamily: 'Outfit' }} axisLine={{ stroke: '#2C2C3F' }} tickLine={false} dy={10} />
+                    <YAxis stroke="#4b5563" tick={{ fill: '#9ca3af', fontSize: 13, fontFamily: 'Outfit' }} axisLine={{ stroke: '#2C2C3F' }} tickLine={false} dx={-10} />
                     <Tooltip
-                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(8px)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.5)', boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.1)' }}
-                        itemStyle={{ color: '#4f46e5', fontWeight: 600 }}
-                        labelStyle={{ color: '#6b7280', fontSize: '12px', marginBottom: '4px' }}
+                        contentStyle={{ backgroundColor: '#1C1C28', borderRadius: '16px', border: '1px solid #2C2C3F', boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.5)' }}
+                        itemStyle={{ color: '#855CF1', fontWeight: 600, fontFamily: 'Outfit' }}
+                        labelStyle={{ color: '#9ca3af', fontSize: '13px', marginBottom: '8px', fontFamily: 'Outfit' }}
+                        cursor={{ stroke: '#2C2C3F', strokeWidth: 2, strokeDasharray: '4 4' }}
                     />
                     <Area
                         type="monotone"
                         dataKey="duration"
-                        stroke="#6366f1"
-                        strokeWidth={3}
+                        stroke="#855CF1"
+                        strokeWidth={4}
                         fillOpacity={1}
                         fill="url(#colorDuration)"
-                        activeDot={{ r: 6, strokeWidth: 0, fill: '#4f46e5' }}
+                        activeDot={{ r: 8, strokeWidth: 0, fill: '#855CF1', opacity: 0.8 }}
                     />
                 </AreaChart>
             </ResponsiveContainer>
