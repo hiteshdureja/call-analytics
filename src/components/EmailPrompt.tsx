@@ -2,14 +2,73 @@ import { useState } from "react"
 import { supabase } from "../lib/supabaseClient"
 import SadPathChart, { type HierarchicalChartData } from "./SadPathChart"
 
+const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+    <div className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl ${className}`}>
+        {children}
+    </div>
+)
+
+const Button = ({
+    children,
+    onClick,
+    variant = "primary",
+    className = "",
+    disabled = false
+}: {
+    children: React.ReactNode;
+    onClick: () => void;
+    variant?: "primary" | "secondary" | "danger" | "ghost";
+    className?: string;
+    disabled?: boolean;
+}) => {
+    const variants = {
+        primary: "bg-accent text-black hover:bg-accent/90",
+        secondary: "bg-white/10 text-white hover:bg-white/20 border border-white/10",
+        danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
+        ghost: "bg-transparent text-gray-400 hover:text-white"
+    }
+
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+        >
+            {children}
+        </button>
+    )
+}
+
+const Input = ({
+    value,
+    onChange,
+    type = "text",
+    className = "",
+    label
+}: {
+    value: string | number;
+    onChange: (val: string) => void;
+    type?: string;
+    className?: string;
+    label?: string;
+}) => (
+    <div className="w-full">
+        {label && <label className="block text-xs text-gray-400 mb-1.5 uppercase tracking-wider font-semibold">{label}</label>}
+        <input
+            type={type}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={`w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all ${className}`}
+        />
+    </div>
+)
+
 export default function EmailPrompt() {
     const [email, setEmail] = useState("")
     const [data, setData] = useState<HierarchicalChartData | null>(null)
     const [previousData, setPreviousData] = useState<HierarchicalChartData | null>(null)
-    const [newValues, setNewValues] = useState("")
     const [loaded, setLoaded] = useState(false)
-    const [showConfirmation, setShowConfirmation] = useState(false)
-    const [pendingData, setPendingData] = useState<HierarchicalChartData | null>(null)
+    const [isEditing, setIsEditing] = useState(false)
 
     const getDefaultData = (): HierarchicalChartData => ({
         innerRing: [
@@ -28,49 +87,20 @@ export default function EmailPrompt() {
         ],
     })
 
-    const parseValuesToData = (values: string): HierarchicalChartData => {
-        const parsedValues = values.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v))
-        
-        if (parsedValues.length >= 2) {
-            const languageValue = parsedValues[0] || 75
-            const hostilityValue = parsedValues[1] || 25
-            
-            const outerValues = parsedValues.slice(2, 10)
-            const defaultOuter = [20, 35, 20, 15, 10, 12, 10, 8]
-            
-            return {
-                innerRing: [
-                    { name: 'Language Issues', value: languageValue },
-                    { name: 'Hostility Issues', value: hostilityValue },
-                ],
-                outerRing: [
-                    { name: 'Assistant did not speak French', value: outerValues[0] || defaultOuter[0] },
-                    { name: 'Unsupported Language', value: outerValues[1] || defaultOuter[1] },
-                    { name: 'Assistant did not speak Spanish', value: outerValues[2] || defaultOuter[2] },
-                    { name: 'Verbal Aggression', value: outerValues[3] || defaultOuter[3] },
-                    { name: 'Customer Hostility', value: outerValues[4] || defaultOuter[4] },
-                    { name: 'User refused to confirm identity', value: outerValues[5] || defaultOuter[5] },
-                    { name: 'Caller Identification', value: outerValues[6] || defaultOuter[6] },
-                    { name: 'Incorrect caller identity', value: outerValues[7] || defaultOuter[7] },
-                ],
-            }
-        }
-        
-        return getDefaultData()
-    }
-
     const loadData = async (email: string) => {
+        if (!email) return
+
         try {
             const { data: supabaseData, error } = await supabase
                 .from("user_data")
                 .select("chart_data")
                 .eq("email", email)
                 .single()
-            
+
             if (error && error.code !== 'PGRST116') {
                 console.error('Error loading data:', error)
             }
-            
+
             if (supabaseData && supabaseData.chart_data) {
                 setData(supabaseData.chart_data)
                 setPreviousData(supabaseData.chart_data)
@@ -79,24 +109,45 @@ export default function EmailPrompt() {
                 setData(defaultData)
                 setPreviousData(null)
             }
+            setLoaded(true)
         } catch (error) {
             console.error('Error in loadData:', error)
             const defaultData = getDefaultData()
             setData(defaultData)
             setPreviousData(null)
-        } finally {
             setLoaded(true)
         }
     }
 
+    const handleDataChange = (ring: 'innerRing' | 'outerRing', index: number, val: string) => {
+        if (!data) return
+        const newValue = parseInt(val) || 0
+        const newData = { ...data }
+        newData[ring][index].value = newValue
+        setData({ ...newData })
+    }
+
     const handleSaveClick = () => {
-        const newData = parseValuesToData(newValues)
-        
+        if (!data) return
+
         if (previousData) {
-            setPendingData(newData)
-            setShowConfirmation(true)
+            const msg = `Overwrite Existing Data?
+
+Previous Values:
+Inner: ${previousData.innerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
+Outer: ${previousData.outerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
+
+New Values:
+Inner: ${data.innerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
+Outer: ${data.outerRing.map(i => `${i.name}: ${i.value}`).join(', ')}
+
+Do you want to overwrite?`
+
+            if (window.confirm(msg)) {
+                saveDataToSupabase(data)
+            }
         } else {
-            saveDataToSupabase(newData)
+            saveDataToSupabase(data)
         }
     }
 
@@ -110,136 +161,119 @@ export default function EmailPrompt() {
             }
             setData(chartData)
             setPreviousData(chartData)
-            setNewValues("")
-            setShowConfirmation(false)
-            setPendingData(null)
+            setIsEditing(false)
         } catch (error) {
             console.error('Error in saveDataToSupabase:', error)
             alert('Failed to save data. Please check your Supabase configuration.')
         }
     }
 
-    const handleConfirmOverwrite = () => {
-        if (pendingData) {
-            saveDataToSupabase(pendingData)
+    const handleCancelEdit = () => {
+        setIsEditing(false)
+        // Revert to previous data if we cancel without saving
+        if (previousData) {
+            setData(previousData)
+        } else {
+            // Reload default if no previous data existed (edge case)
+            setData(getDefaultData())
         }
     }
 
-    const handleCancelOverwrite = () => {
-        setShowConfirmation(false)
-        setPendingData(null)
+    if (!loaded) {
+        return (
+            <Card className="max-w-md w-full mx-auto mt-10">
+                <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-white mb-2">Welcome Back</h3>
+                    <p className="text-gray-400 text-sm">Enter your email to view your analytics dashboard</p>
+                </div>
+                <div className="space-y-4">
+                    <Input
+                        value={email}
+                        onChange={setEmail}
+                        label="Email Address"
+                        type="email"
+                        className="text-lg"
+                    />
+                    <Button onClick={() => loadData(email)} className="w-full py-3">
+                        Load Dashboard
+                    </Button>
+                </div>
+            </Card>
+        )
     }
 
     return (
-        <div className="mt-6 bg-white/5 rounded-2xl p-6">
-            {!loaded ? (
+        <Card className="mt-6">
+            <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
                 <div>
-                    <h3 className="mb-2 text-white">Enter your email to load your data</h3>
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        placeholder="you@example.com"
-                        className="px-3 py-2 rounded bg-gray-900 border border-gray-700 w-full text-white placeholder-gray-500"
-                    />
-                    <button 
-                        onClick={() => loadData(email)} 
-                        className="mt-3 px-4 py-2 bg-accent rounded text-black font-semibold hover:opacity-90 transition-opacity"
-                    >
-                        Load
-                    </button>
+                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        Call Reasons Analysis
+                        {previousData && <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/20">Synced</span>}
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-1">Breakdown of call failure reasons</p>
                 </div>
-            ) : (
-                <>
+
+                {!isEditing && (
+                    <Button variant="secondary" onClick={() => setIsEditing(true)}>
+                        Edit Data
+                    </Button>
+                )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className={`lg:col-span-2 order-2 lg:order-1 transition-all duration-500 ${isEditing ? 'opacity-50 blur-sm pointer-events-none' : 'opacity-100'}`}>
                     <SadPathChart data={data || undefined} />
-                    
-                    {showConfirmation && previousData && pendingData && (
-                        <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
-                            <h4 className="text-yellow-400 font-semibold mb-3">Previous Values Detected</h4>
-                            <div className="mb-4">
-                                <p className="text-sm text-gray-300 mb-2">Your previous values:</p>
-                                <div className="bg-gray-900/50 p-3 rounded text-sm">
-                                    <div className="mb-2">
-                                        <strong className="text-white">Inner Ring:</strong>
-                                        <ul className="ml-4 mt-1 text-gray-300">
-                                            {previousData.innerRing.map((item, idx) => (
-                                                <li key={idx}>{item.name}: {item.value}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <strong className="text-white">Outer Ring:</strong>
-                                        <ul className="ml-4 mt-1 text-gray-300">
-                                            {previousData.outerRing.map((item, idx) => (
-                                                <li key={idx}>{item.name}: {item.value}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
+                </div>
+
+                {isEditing && data && (
+                    <div className="lg:col-span-1 order-1 lg:order-2 flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="flex-1 space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar mb-4">
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <h3 className="text-accent font-semibold mb-3 text-sm uppercase tracking-wider">Inner Ring (Categories)</h3>
+                                <div className="space-y-3">
+                                    {data.innerRing.map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <span className="text-xs text-gray-400 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                            <Input
+                                                value={item.value}
+                                                onChange={(v) => handleDataChange('innerRing', idx, v)}
+                                                type="number"
+                                                className="text-right font-mono"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                            <div className="mb-4">
-                                <p className="text-sm text-gray-300 mb-2">New values you want to save:</p>
-                                <div className="bg-gray-900/50 p-3 rounded text-sm">
-                                    <div className="mb-2">
-                                        <strong className="text-white">Inner Ring:</strong>
-                                        <ul className="ml-4 mt-1 text-gray-300">
-                                            {pendingData.innerRing.map((item, idx) => (
-                                                <li key={idx}>{item.name}: {item.value}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <strong className="text-white">Outer Ring:</strong>
-                                        <ul className="ml-4 mt-1 text-gray-300">
-                                            {pendingData.outerRing.map((item, idx) => (
-                                                <li key={idx}>{item.name}: {item.value}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
+
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <h3 className="text-blue-400 font-semibold mb-3 text-sm uppercase tracking-wider">Outer Ring (Details)</h3>
+                                <div className="space-y-3">
+                                    {data.outerRing.map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <span className="text-xs text-gray-400 w-1/2 truncate" title={item.name}>{item.name}</span>
+                                            <Input
+                                                value={item.value}
+                                                onChange={(v) => handleDataChange('outerRing', idx, v)}
+                                                type="number"
+                                                className="text-right font-mono"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                            <p className="text-sm text-yellow-300 mb-4">Do you want to overwrite your previous values?</p>
-                            <div className="flex gap-3">
-                                <button 
-                                    onClick={handleConfirmOverwrite}
-                                    className="px-4 py-2 bg-accent rounded text-black font-semibold hover:opacity-90 transition-opacity"
-                                >
-                                    Yes, Overwrite
-                                </button>
-                                <button 
-                                    onClick={handleCancelOverwrite}
-                                    className="px-4 py-2 bg-gray-700 rounded text-white font-semibold hover:bg-gray-600 transition-colors"
-                                >
-                                    Cancel
-                                </button>
                             </div>
                         </div>
-                    )}
 
-                    <div className="mt-4">
-                        <p className="text-sm text-gray-300 mb-2">
-                            Enter values (comma-separated). First 2 values for Inner Ring (Language Issues, Hostility Issues), 
-                            next 8 values for Outer Ring details.
-                        </p>
-                        <p className="text-xs text-gray-500 mb-2">
-                            Format: Language, Hostility, French, Unsupported, Spanish, Aggression, Hostility, Refused, ID, Incorrect ID
-                        </p>
-                        <input
-                            value={newValues}
-                            onChange={e => setNewValues(e.target.value)}
-                            placeholder="e.g., 75, 25, 20, 35, 20, 15, 10, 12, 10, 8"
-                            className="px-3 py-2 rounded bg-gray-900 border border-gray-700 w-full mt-2 text-white placeholder-gray-500"
-                        />
-                        <button 
-                            onClick={handleSaveClick} 
-                            className="mt-3 px-4 py-2 bg-accent rounded text-black font-semibold hover:opacity-90 transition-opacity"
-                            disabled={showConfirmation}
-                        >
-                            Save Values
-                        </button>
+                        <div className="flex gap-3 pt-2 border-t border-white/10">
+                            <Button variant="ghost" onClick={handleCancelEdit} className="flex-1">
+                                Cancel
+                            </Button>
+                            <Button onClick={handleSaveClick} className="flex-1">
+                                Save Changes
+                            </Button>
+                        </div>
                     </div>
-                </>
-            )}
-        </div>
+                )}
+            </div>
+        </Card>
     )
 }
